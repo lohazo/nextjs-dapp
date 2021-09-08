@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: poco-sell
+  namespace: poco
+  labels:
+    app: poco-sell
+spec:
+  type: NodePort
+  ports:
+  - name: poco-sell
+    port: 3000
+    targetPort: poco-sell
+  selector:
+    app: poco-sell

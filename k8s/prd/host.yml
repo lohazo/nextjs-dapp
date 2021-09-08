@@ -1,0 +1,11 @@
+---
+apiVersion: getambassador.io/v2
+kind: Host
+metadata:
+  name: private.pocoland.com
+  namespace: poco
+spec:
+  hostname: private.pocoland.com
+  acmeProvider:
+    authority: https://acme-v02.api.letsencrypt.org/directory # Optional: The CA you want to get your certificate from. Defaults to Let's Encrypt
+    email: jay@coinhe.com

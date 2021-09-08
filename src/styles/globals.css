@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,900;1,800&display=swap");
+
+@layer components {
+  .btn-primary {
+    @apply px-8 py-2 bg-primary rounded-full font-bold text-white
+  }
+}
+
+/* hide arrows when set input type="number"  */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+[data-reach-dialog-content] {
+  width: 50vw;
+  margin: 10vh auto;
+  background: white;
+  padding: 0;
+  outline: none;
+}

@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: poco-sell
+  namespace: poco
+  labels:
+    app: poco-sell
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: poco-sell
+  template:
+    metadata:
+      labels:
+        app: poco-sell
+        node: frontend
+    spec:
+      containers:
+        - name: poco-sell
+          image: asia.gcr.io/base-operation-service/coinhe-prd/poco-sell:latest
+          command: ["yarn", "start"]
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+          ports:
+            - name: poco-sell
+              containerPort: 3000

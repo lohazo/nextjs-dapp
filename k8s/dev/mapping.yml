@@ -1,0 +1,12 @@
+apiVersion: getambassador.io/v2
+kind: Mapping
+metadata:
+  name: poco-sell.noownerapi.com
+  namespace: poco
+spec:
+  prefix: /
+  host: "^(poco-sell.noownerapi.com)$"
+  host_regex: true
+  service: poco-sell-dev:3000
+  timeout_ms: 20000
+  connect_timeout_ms: 20000

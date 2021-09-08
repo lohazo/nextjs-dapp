@@ -1,0 +1,12 @@
+apiVersion: getambassador.io/v2
+kind: Mapping
+metadata:
+  name: private.pocoland.com
+  namespace: poco
+spec:
+  prefix: /
+  host: "^(private.pocoland.com)$"
+  host_regex: true
+  service: poco-sell:3000
+  timeout_ms: 20000
+  connect_timeout_ms: 20000

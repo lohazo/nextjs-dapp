@@ -1,0 +1,122 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: generate-tag-dev
+    image: alpine:3.6
+    environment:
+      BUILD_ENV: dev
+    commands:
+      - VERSION=`date +%Y%m%d-%H%M%S`
+      - echo -n $${VERSION} > .tags
+      - echo -n $${VERSION} > "VERSION.$${BUILD_ENV}"
+    when:
+      branch:
+        - develop
+
+  - name: generate-tag-prd
+    image: alpine:3.6
+    environment:
+      BUILD_ENV: prd
+    commands:
+      - VERSION=`date +%Y%m%d-%H%M%S`
+      - echo -n $${VERSION} > .tags
+      - echo -n $${VERSION} > "VERSION.$${BUILD_ENV}"
+    when:
+      event:
+        - tag
+      ref:
+        include:
+          - refs/tags/v**
+
+  - name: docker-build-dev
+    image: plugins/gcr
+    settings:
+      repo: base-operation-service/coinhe-dev/poco-sell-dev
+      registry: asia.gcr.io
+      json_key:
+        from_secret: GOOGLE_CREDENTIALS
+      build_args:
+        - BUILD_ENV=dev
+    when:
+      event:
+        - push
+      branch:
+        - develop
+
+  - name: docker-build-prd
+    image: plugins/gcr
+    settings:
+      repo: base-operation-service/coinhe-prd/poco-sell
+      registry: asia.gcr.io
+      json_key:
+        from_secret: GOOGLE_CREDENTIALS
+      build_args:
+        - BUILD_ENV=prd
+    when:
+      event:
+        - tag
+      ref:
+        include:
+          - refs/tags/v**
+
+  - name: deploy-dev
+    image: haigiang0591/gcp-deployment-sdk:latest
+    environment:
+      PROJECT_ID: base-operation-service
+      BUILD_ENV: dev
+      CLOUDSDK_COMPUTE_ZONE: asia-southeast1-a
+      CLUSTER_NAME: coinhe-services
+      GCLOUD_SERVICE_ACCOUNT_KEY_DEV:
+        from_secret: GOOGLE_CREDENTIALS
+    commands:
+      ## setup
+      ### gcloud
+      - echo $${GCLOUD_SERVICE_ACCOUNT_KEY_DEV} > /tmp/gcloud-service-account-key.json
+      - gcloud auth activate-service-account --key-file /tmp/gcloud-service-account-key.json
+      - gcloud config set project $${PROJECT_ID}
+      - gcloud --quiet config set container/cluster $${CLUSTER_NAME}
+      - gcloud config set compute/zone $${CLOUDSDK_COMPUTE_ZONE}
+      # - gcloud components install kubectl
+      - gcloud container clusters get-credentials $${CLUSTER_NAME}
+      ## deploy to gke
+      - VERSION=`cat VERSION.$${BUILD_ENV}`
+      - sed -ri "s/poco-sell-dev:.*$/poco-sell-dev:$${VERSION}/g" k8s/$${BUILD_ENV}/deployment.yml
+      - kubectl apply -f k8s/$${BUILD_ENV}/deployment.yml
+    when:
+      event:
+        - push
+      branch:
+        - develop
+
+  - name: deploy-prd
+    image: haigiang0591/gcp-deployment-sdk:latest
+    environment:
+      PROJECT_ID: base-operation-service
+      BUILD_ENV: prd
+      CLOUDSDK_COMPUTE_ZONE: asia-southeast1-a
+      CLUSTER_NAME: coinhe-services
+      GCLOUD_SERVICE_ACCOUNT_KEY_DEV:
+        from_secret: GOOGLE_CREDENTIALS
+    commands:
+      ## setup
+      ### gcloud
+      - echo $${GCLOUD_SERVICE_ACCOUNT_KEY_DEV} > /tmp/gcloud-service-account-key.json
+      - gcloud auth activate-service-account --key-file /tmp/gcloud-service-account-key.json
+      - gcloud config set project $${PROJECT_ID}
+      - gcloud --quiet config set container/cluster $${CLUSTER_NAME}
+      - gcloud config set compute/zone $${CLOUDSDK_COMPUTE_ZONE}
+      # - gcloud components install kubectl
+      - gcloud container clusters get-credentials $${CLUSTER_NAME}
+      ## deploy to gke
+      - VERSION=`cat VERSION.$${BUILD_ENV}`
+      - sed -ri "s/poco-sell:.*$/poco-sell:$${VERSION}/g" k8s/$${BUILD_ENV}/deployment.yml
+      - kubectl apply -f k8s/$${BUILD_ENV}/deployment.yml
+    when:
+      event:
+        - tag
+      ref:
+        include:
+          - refs/tags/v**
