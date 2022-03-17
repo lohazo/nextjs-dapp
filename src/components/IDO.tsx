@@ -2,6 +2,7 @@ import { Web3Provider } from "@ethersproject/providers";
 import { useWeb3React } from "@web3-react/core";
 import BigNumber from "bignumber.js";
 import React, { useEffect, useState } from "react";
+import { useERC20 } from "../hooks/useContract";
 import AmountInput from "./AmountInput";
 import AmountInputMulti from "./AmountInputMulti";
 
@@ -13,6 +14,7 @@ const tokens = [
 
 function IDO() {
   const context = useWeb3React<Web3Provider>();
+  const busdContract = useERC20("0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56");
 
   const [userBnbBalance, setUserBnbBalance] = useState("0");
   const [soldAmount, setsoldAmount] = useState("");
@@ -25,6 +27,17 @@ function IDO() {
     // @ts-ignore
     setSelectedToken(selected);
   };
+
+  const getBalance = async () => {
+    const balance = await busdContract.balanceOf(context.account);
+    setUserBnbBalance(balance.toString());
+  };
+
+  useEffect(() => {
+    if (context.account && busdContract) {
+      getBalance();
+    }
+  }, [selectedToken, context.account, busdContract]);
 
   const [amount, setAmount] = useState("");
 
@@ -43,8 +56,8 @@ function IDO() {
   const handleApprove = async () => {};
 
   return (
-    <div className="pb-6 px-4 md:px-0">
-      <div className="max-w-sm mx-auto relative mt-10 bg-white p-8 rounded-2xl border-1">
+    <div className="px-4 pb-6 md:px-0">
+      <div className="relative max-w-sm p-8 mx-auto mt-10 bg-white rounded-2xl border-1">
         <AmountInputMulti
           tokenSymbol="BNB"
           balance={userBnbBalance}
@@ -53,7 +66,7 @@ function IDO() {
           onSelectToken={handleSelectToken}
         />
 
-        <div className="flex my-6 justify-center">
+        <div className="flex justify-center my-6">
           <img src="/images/arrowdown.svg" />
         </div>
 
@@ -71,7 +84,7 @@ function IDO() {
         >
           {selectedToken?.symbol !== "BNB" && !isApproved && (
             <button
-              className="btn-primary bg-green-500"
+              className="bg-green-500 btn-primary"
               onClick={handleApprove}
             >
               Approve
